@@ -48,7 +48,18 @@ One correct suggestion provided by Claude Code was regarding the "New Game" rese
 ╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
 ```
 
-One incorrect suggestion provided by the AI dealt with 
+One incomplete suggestion provided by the AI dealt with the score not being correctly updated throughout gameplay. It initally suggested that the reason was due to the incorrect rewarding of points on even guesses, but upon iteration it spotted the actual cause:
+
+```
+What was already fixed:
+
+Bug 3: update_score was rewarding +5 points on even-numbered wrong guesses. That's been corrected.
+What's still broken (not addressed yet):
+
+Score is never reset on New Game. The if new_game: block resets attempts, secret, status, and history — but not score. So it carries over across games.
+
+Score has no visible display during gameplay. It only appears in the collapsed debug expander and in the final win/loss message. Players have no feedback that the score is changing mid-game.
+```
 ---
 
 ## 3. Debugging and testing your fixes
@@ -58,6 +69,8 @@ One incorrect suggestion provided by the AI dealt with
   and what it showed you about your code.
 - Did AI help you design or understand any tests? How?
 
+I decided a bug was fixed by writing a pytest case that targeted the specific broken behavior, running the full test suite to confirm it passed, and then playing through the game a couple of times with different values to make sure it works. For example, `test_guess_too_high` checks that guessing 60 when the secret is 50 returns the outcome `"Too High"` and a hint containing `"LOWER"`. Similarly, `test_new_game_resets_status_to_playing` confirmed the New Game bug was gone by asserting that calling `reset_game_state` on a "won" state always sets status back to `"playing"`. The AI helped streamline designing these tests significantly. I could give it simple direction about what behavior I wanted covered and it handled the more technical details like setting up the `SimpleNamespace` mock state object and writing the assertions correctly.
+
 ---
 
 ## 4. What did you learn about Streamlit and state?
@@ -65,6 +78,8 @@ One incorrect suggestion provided by the AI dealt with
 - In your own words, explain why the secret number kept changing in the original app.
 - How would you explain Streamlit "reruns" and session state to a friend who has never used Streamlit?
 - What change did you make that finally gave the game a stable secret number?
+
+Streamlit reruns the entire Python script from top to bottom every time the user interacts with anything. Without session state, any variable assigned at the top of the script would be reassigned fresh on every rerun, which is why the secret number kept changing: `random.randint(low, high)` ran again each time. The fix was wrapping the secret generation in `if "secret" not in st.session_state:`, so a new random number is only picked once at the start of a game and then saved across reruns.
 
 ---
 
@@ -74,3 +89,5 @@ One incorrect suggestion provided by the AI dealt with
   - This could be a testing habit, a prompting strategy, or a way you used Git.
 - What is one thing you would do differently next time you work with AI on a coding task?
 - In one or two sentences, describe how this project changed the way you think about AI generated code.
+
+One habit I want to carry forward is writing a test immediately after identifying a bug so I have a clear way to confirm when the fix actually works. Next time I work with AI on a coding task, I would be more incremental: apply one small change at a time, run the tests, and verify before moving to the next issue, rather than letting changes pile up in a disorganized way. This project made me realize that AI-generated code always needs a human to guide and validate it.

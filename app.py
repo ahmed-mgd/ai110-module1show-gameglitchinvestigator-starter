@@ -7,7 +7,8 @@ def get_range_for_difficulty(difficulty: str):
     if difficulty == "Normal":
         return 1, 100
     if difficulty == "Hard":
-        return 1, 50
+        # FIX: Increase range for hard difficulty to something reasonable.
+        return 1, 200
     return 1, 100
 
 
@@ -58,8 +59,7 @@ def update_score(current_score: int, outcome: str, attempt_number: int):
         return current_score + points
 
     if outcome == "Too High":
-        if attempt_number % 2 == 0:
-            return current_score + 5
+        # FIX: Removed reward for wrong guesses; wrong guesses should always deduct points
         return current_score - 5
 
     if outcome == "Too Low":
@@ -107,10 +107,15 @@ if "status" not in st.session_state:
 if "history" not in st.session_state:
     st.session_state.history = []
 
+# FIX: Store the last hint in session state so it persists across reruns instead of disappearing after the next widget interaction
+if "last_hint" not in st.session_state:
+    st.session_state.last_hint = None
+
 st.subheader("Make a guess")
 
 st.info(
-    f"Guess a number between 1 and 100. "
+    # FIX: Use actual range values rather than hardcoding "1 to 100" in the prompt.
+    f"Guess a number between {low} and {high}. "
     f"Attempts left: {attempt_limit - st.session_state.attempts}"
 )
 
@@ -135,10 +140,9 @@ with col3:
     show_hint = st.checkbox("Show hint", value=True)
 
 if new_game:
-    # FIX: Reset the game state properly when starting a new game.
-    # Specifically status should be reset to "playing" and history cleared.
     st.session_state.attempts = 0
-    st.session_state.secret = random.randint(1, 100)
+    # FIX: Use difficulty-aware range instead of hardcoded 1-100 so New Game respects the selected difficulty
+    st.session_state.secret = random.randint(low, high)
     st.session_state.status = "playing"
     st.session_state.history = []
     st.success("New game started.")
@@ -152,25 +156,24 @@ if st.session_state.status != "playing":
     st.stop()
 
 if submit:
-    st.session_state.attempts += 1
-
     ok, guess_int, err = parse_guess(raw_guess)
 
     if not ok:
+        # FIX: Only increment attempts after a valid guess so invalid inputs don't waste a turn
         st.session_state.history.append(raw_guess)
         st.error(err)
     else:
+        st.session_state.attempts += 1
         st.session_state.history.append(guess_int)
 
-        if st.session_state.attempts % 2 == 0:
-            secret = str(st.session_state.secret)
-        else:
-            secret = st.session_state.secret
+        # FIX: Always compare with the integer secret; the original cast secret to a string on even
+        # attempts causing string-vs-int comparison bugs and wrong hints
+        secret = st.session_state.secret
 
         outcome, message = check_guess(guess_int, secret)
 
-        if show_hint:
-            st.warning(message)
+        # FIX: Store hint in session state so it persists across reruns instead of disappearing after the next widget interaction
+        st.session_state.last_hint = message
 
         st.session_state.score = update_score(
             current_score=st.session_state.score,
@@ -193,6 +196,9 @@ if submit:
                     f"The secret was {st.session_state.secret}. "
                     f"Score: {st.session_state.score}"
                 )
+
+if show_hint and st.session_state.last_hint:
+    st.warning(st.session_state.last_hint)
 
 st.divider()
 st.caption("Built by an AI that claims this code is production-ready.")
