@@ -8,6 +8,12 @@ Answer each question in 3 to 5 sentences. Be specific and honest about what actu
 - List at least two concrete bugs you noticed at the start  
   (for example: "the secret number kept changing" or "the hints were backwards").
 
+  1) The hint suggested to go higher when the number was lower, and vice versa.
+  2) Winning after resetting the game with previous attempts yields inconsistent scores.
+  3) Can't start a "New Game" after a previous win
+  4) The range to guess between (e.g. 1 to 100) in the settings menu does not match the "Guess a number..." alert. The alert always says to guess between 1 and 100
+  5) The hard setting gives a smaller (easier) range than the normal setting, which may or may not be a bug.
+
 ---
 
 ## 2. How did you use AI as a teammate?
@@ -16,6 +22,33 @@ Answer each question in 3 to 5 sentences. Be specific and honest about what actu
 - Give one example of an AI suggestion that was correct (including what the AI suggested and how you verified the result).
 - Give one example of an AI suggestion that was incorrect or misleading (including what the AI suggested and how you verified the result).
 
+I used Claude Code to analyze the code and suggest solutions and Github Copilot for making smaller iterations and suggestions.
+
+One correct suggestion provided by Claude Code was regarding the "New Game" reset bug. It pointed out that the status does not change back to playing and the history isn't reset. I verified this by playing back through the game and noting that the "You already won" alert disappears and the history is correctly reset.
+
+```
+● Found the bug. When "New Game" is clicked, the code resets attempts and secret but never resets
+  st.session_state.status back to "playing". So the status stays "won", and the check at line 140 immediately shows
+  the "You already won" message and calls st.stop().
+
+● Update(app.py)
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Edit file
+ app.py
+╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
+ 134  if new_game:
+ 135      st.session_state.attempts = 0
+ 136      st.session_state.secret = random.randint(1, 100)
+ 137 +    st.session_state.status = "playing"
+ 138 +    st.session_state.history = []
+ 139      st.success("New game started.")
+ 140      st.rerun()
+ 141
+╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
+```
+
+One incorrect suggestion provided by the AI dealt with 
 ---
 
 ## 3. Debugging and testing your fixes
