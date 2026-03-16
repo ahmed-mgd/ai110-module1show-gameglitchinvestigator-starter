@@ -33,6 +33,7 @@ def check_guess(guess, secret):
     if guess == secret:
         return "Win", "🎉 Correct!"
 
+    # FIX: The original code had the hints reversed for "Too High" vs "Too Low"
     try:
         if guess > secret:
             return "Too High", "📈 Go LOWER!"
@@ -49,6 +50,8 @@ def check_guess(guess, secret):
 
 def update_score(current_score: int, outcome: str, attempt_number: int):
     if outcome == "Win":
+        # FIX: The original code was incorrectly calculating points using (attempt_number + 1) which would give 80 points for the first attempt instead of 100.
+        # It should be (attempt_number - 1).
         points = 100 - 10 * (attempt_number - 1)
         if points < 10:
             points = 10
@@ -132,6 +135,8 @@ with col3:
     show_hint = st.checkbox("Show hint", value=True)
 
 if new_game:
+    # FIX: Reset the game state properly when starting a new game.
+    # Specifically status should be reset to "playing" and history cleared.
     st.session_state.attempts = 0
     st.session_state.secret = random.randint(1, 100)
     st.session_state.status = "playing"

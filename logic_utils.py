@@ -60,3 +60,16 @@ def update_score(current_score: int, outcome: str, attempt_number: int):
         return current_score - 5
 
     return current_score
+
+def reset_game_state(state, low: int = 1, high: int = 100):
+    """
+    Reset all game state fields for a new game.
+    `state` can be any object with writable attributes (e.g. st.session_state).
+    Returns the mutated state so it can be inspected in tests.
+    """
+    import random
+    state.attempts = 0
+    state.secret = random.randint(low, high)
+    state.status = "playing"
+    state.history = []
+    return state
